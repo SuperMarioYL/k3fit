@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 360" width="880" height="360"
+     font-family="'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace"
+     role="img" aria-label="Terminal: k3fit --vram 32 --ram 128 output">
+  <rect x="0" y="0" width="880" height="360" rx="8" fill="#0D1117"/>
+  <!-- title bar -->
+  <rect x="0" y="0" width="880" height="28" rx="8" fill="#161B22"/>
+  <rect x="0" y="16" width="880" height="12" fill="#161B22"/>
+  <circle cx="14" cy="14" r="5" fill="#FF5F57"/>
+  <circle cx="32" cy="14" r="5" fill="#FEBC2E"/>
+  <circle cx="50" cy="14" r="5" fill="#28C840"/>
+  <text x="440" y="18" text-anchor="middle" font-size="11" fill="#6E7681">k3fit — 88×22</text>
+
+  <!-- command -->
+  <text x="16" y="52" font-size="12" fill="#7EE787">$ k3fit --vram 32 --ram 128</text>
+
+  <!-- output -->
+  <text x="16" y="76" font-size="12" fill="#C9D1D9">K3Fit — Kimi K3 Delta-Attention Fit Planner</text>
+  <text x="16" y="94" font-size="12" fill="#8B949E">══════════════════════════════════════════════════════════</text>
+  <text x="16" y="112" font-size="12" fill="#C9D1D9">Rig:  32 GiB VRAM | 128 GiB RAM</text>
+  <text x="16" y="130" font-size="12" fill="#C9D1D9">Model: Kimi K3 — 2.8T params, MoE 896×16, 93 layers</text>
+
+  <text x="16" y="156" font-size="12" fill="#8B949E">Delta-Attention memory at 1M context</text>
+  <text x="16" y="174" font-size="12" fill="#C9D1D9">  DA matrix (69 layers)     0.00 GiB  fixed</text>
+  <text x="16" y="192" font-size="12" fill="#C9D1D9">  KV cache (24 layers)    22.89 GiB  per-ctx</text>
+  <text x="16" y="210" font-size="12" fill="#C9D1D9">  Total (Delta-Attn)      22.89 GiB</text>
+  <text x="16" y="228" font-size="12" fill="#8B949E">  (Standard KV all 93)   88.69 GiB  — generic profilers</text>
+  <text x="16" y="246" font-size="12" fill="#7EE787">  Delta-Attention saves 3.9× at 1M context.</text>
+
+  <text x="16" y="272" font-size="12" fill="#8B949E">──────────────────────────────────────────────────────────</text>
+  <text x="16" y="290" font-size="12" fill="#79C0FF">Recommendation: Q2_K at 512K context</text>
+  <text x="16" y="308" font-size="12" fill="#C9D1D9">Expert routing:  16 of 896 active (1.8%)</text>
+  <text x="16" y="326" font-size="12" fill="#D2A8FF">Predicted decoding tps ≈ 12 (heuristic, ±30% → 8–16)</text>
+  <text x="16" y="344" font-size="12" fill="#FF7B72">1M context: does NOT fit at any quant — max is 589837 (576K)</text>
+
+  <!-- blinking cursor -->
+  <rect x="560" y="334" width="8" height="14" fill="#7EE787">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.48;0.5;1" dur="1s" repeatCount="indefinite"/>
+  </rect>
+</svg>

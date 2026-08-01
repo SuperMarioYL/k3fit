@@ -1,0 +1,27 @@
+# build artifacts
+/k3fit
+/dist/
+*.exe
+
+# Go workspace scratch
+/go.work
+/go.work.sum
+
+# editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# build scratch
+.builder_*
+.build_metadata*
+.stage_*
+.spawn.*
+_build_ctx.json
+PUBLISH_BLOCKED.md
+BUILD_SETUP_NEXT_STEPS.md
+.claude/
+CLAUDE.md

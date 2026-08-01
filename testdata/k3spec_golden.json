@@ -1,0 +1,120 @@
+{
+  "spec": {
+    "total_layers": 93,
+    "da_layers": 69,
+    "kv_layers": 24,
+    "heads_per_layer": 2,
+    "head_dim": 128,
+    "delta_matrix_dim": 128,
+    "experts_total": 896,
+    "experts_active": 16,
+    "total_params_b": 2800,
+    "shared_params_b": 12,
+    "context_max": 1000000,
+    "bytes_per_element": 2,
+    "params_per_expert_b": 3.125,
+    "active_params_b": 50,
+    "active_plus_shared_params_b": 62
+  },
+  "delta_at_1m": {
+    "per_head_matrix_bytes": 32768,
+    "da_layer_mem_bytes": 4521984,
+    "kv_layer_mem_bytes": 24576000000,
+    "context_mem_bytes_per_token": 24576,
+    "context_mem_bytes": 24580521984,
+    "standard_kv_bytes": 95232000000,
+    "reduction_ratio": 3.8742871311678653,
+    "context_mem_gib": 22.89239501953125,
+    "standard_kv_gib": 88.69171142578125
+  },
+  "fit_32_128": [
+    {
+      "quant": "Q2_K", "bpw": 2.5625, "bytes_per_param": 0.3203125,
+      "total_weights_bytes": 896875000000,
+      "active_expert_bytes": 16015625000,
+      "shared_bytes": 3843750000,
+      "max_context": 589837, "standard_ctx": 524288,
+      "fits_1m": false, "tps": 12.084972462627853
+    },
+    {
+      "quant": "Q3_K_S", "bpw": 2.75, "bytes_per_param": 0.34375,
+      "total_weights_bytes": 962500000000,
+      "active_expert_bytes": 17187500000,
+      "shared_bytes": 4125000000,
+      "max_context": 530709, "standard_ctx": 524288,
+      "fits_1m": false, "tps": 11.260997067448681
+    },
+    {
+      "quant": "Q3_K_M", "bpw": 3.27, "bytes_per_param": 0.40875,
+      "total_weights_bytes": 1144500000000,
+      "active_expert_bytes": 20437500000,
+      "shared_bytes": 4905000000,
+      "max_context": 366728, "standard_ctx": 262144,
+      "fits_1m": false, "tps": 9.470257472625036
+    },
+    {
+      "quant": "Q4_K_S", "bpw": 3.5, "bytes_per_param": 0.4375,
+      "total_weights_bytes": 1225000000000,
+      "active_expert_bytes": 21875000000,
+      "shared_bytes": 5250000000,
+      "max_context": 294198, "standard_ctx": 262144,
+      "fits_1m": false, "tps": 8.847926267281107
+    },
+    {
+      "quant": "Q4_K_M", "bpw": 4.25, "bytes_per_param": 0.53125,
+      "total_weights_bytes": 1487500000000,
+      "active_expert_bytes": 26562500000,
+      "shared_bytes": 6375000000,
+      "max_context": 57687, "standard_ctx": 32768,
+      "fits_1m": false, "tps": 7.286527514231499
+    },
+    {
+      "quant": "Q5_K_S", "bpw": 5.0, "bytes_per_param": 0.625,
+      "total_weights_bytes": 1750000000000,
+      "active_expert_bytes": 31250000000,
+      "shared_bytes": 7500000000,
+      "max_context": 0, "standard_ctx": 0,
+      "fits_1m": false, "tps": 6.193548387096774
+    },
+    {
+      "quant": "Q5_K_M", "bpw": 5.25, "bytes_per_param": 0.65625,
+      "total_weights_bytes": 1837500000000,
+      "active_expert_bytes": 32812500000,
+      "shared_bytes": 7875000000,
+      "max_context": 0, "standard_ctx": 0,
+      "fits_1m": false, "tps": 5.8986175115207375
+    },
+    {
+      "quant": "Q6_K", "bpw": 6.1, "bytes_per_param": 0.7625,
+      "total_weights_bytes": 2134999999999,
+      "active_expert_bytes": 38125000000,
+      "shared_bytes": 9150000000,
+      "max_context": 0, "standard_ctx": 0,
+      "fits_1m": false, "tps": 5.076679005817028
+    },
+    {
+      "quant": "Q8_0", "bpw": 8.0, "bytes_per_param": 1.0,
+      "total_weights_bytes": 2800000000000,
+      "active_expert_bytes": 50000000000,
+      "shared_bytes": 12000000000,
+      "max_context": 0, "standard_ctx": 0,
+      "fits_1m": false, "tps": 3.870967741935484
+    },
+    {
+      "quant": "F16", "bpw": 16.0, "bytes_per_param": 2.0,
+      "total_weights_bytes": 5600000000000,
+      "active_expert_bytes": 100000000000,
+      "shared_bytes": 24000000000,
+      "max_context": 0, "standard_ctx": 0,
+      "fits_1m": false, "tps": 1.935483870967742
+    }
+  ],
+  "star_moment": {
+    "vram_gib": 32,
+    "ram_gib": 128,
+    "one_m_fits_any_quant": false,
+    "recommended_quant": "Q2_K",
+    "recommended_standard_ctx": 524288,
+    "recommended_tps": 12.084972462627853
+  }
+}
