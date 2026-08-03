@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "name": "k3fit",
+  "github": "https://github.com/SuperMarioYL/k3fit",
+  "host": "k3fit.lei6393.com",
+  "lang": { "primary": "zh", "toggle": true },
+  "accent": ["#e6a144", "#cc7e2e", "#9c5a1f"],
+  "hero": {
+    "eyebrow": { "zh": "本地 · 不下载模型 · 一条命令", "en": "local · no model download · one command" },
+    "headline": { "zh": "下载 1.4TB 之前，先算清你的机器跑不跑得动 Kimi K3", "en": "Know if your rig can run Kimi K3 — before the 1.4TB download" },
+    "sub": { "zh": "输入显存和内存，K3Fit 用 Kimi K3 的 Delta-Attention 记忆模型算出最大上下文、量化档、专家路由和预测 tps。纯算术，不碰模型文件。", "en": "Enter your VRAM and RAM — K3Fit uses Kimi K3's Delta-Attention memory model to compute max context, quant tier, expert routing, and predicted tps. Pure arithmetic, no model files touched." },
+    "command": "k3fit --vram 32 --ram 128",
+    "cta": { "zh": "看演示", "en": "See it run" },
+    "ctaGithub": { "zh": "GitHub 源码", "en": "GitHub source" },
+    "scroll": { "zh": "为什么", "en": "why" }
+  },
+  "advantages": [
+    {
+      "title": { "zh": "下载前就给你答案", "en": "Answers before you download" },
+      "body": { "zh": "1.4TB 的下载要花一整天。一条命令告诉你能开多大上下文、哪档量化放得下、预测 tps 多少——再决定要不要拉。", "en": "A 1.4TB download takes a day. One command tells you the max context, which quant tier fits, and predicted tps — so you decide whether to pull." },
+      "chips": ["› 每档量化最大上下文", "› 预测 tps ±30%", "› 不下载任何模型文件"]
+    },
+    {
+      "title": { "zh": "为 Kimi K3 的 Delta-Attention 量身计算", "en": "Sized for Kimi K3's Delta-Attention" },
+      "body": { "zh": "K3 用 Delta-Attention 替换 69/93 层的 KV cache。标准 KV 计算会算错（1M 上下文 27.2 vs 104.6 GiB）。K3Fit 按真实架构算，不套通用公式。", "en": "K3 replaces KV cache with Delta-Attention in 69 of 93 layers. Standard KV math gets it wrong (1M ctx: 27.2 vs 104.6 GiB). K3Fit computes against the real architecture, not a generic formula." },
+      "chips": ["› 69 层 Delta-Attention", "› 24 层标准 KV", "› 896 专家 MoE"]
+    },
+    {
+      "title": { "zh": "一条命令，零依赖", "en": "One command, zero dependencies" },
+      "body": { "zh": "单 Go 二进制，秒级输出一张表：每档量化能开多大上下文、占多少显存、预测多快。不用装 Python，不用配环境。", "en": "A single Go binary prints a table in under a second: max context per quant, memory used, predicted speed. No Python, no environment setup." },
+      "chips": ["› 单二进制", "› <1 秒出表", "› Go CLI · Homebrew 装机"]
+    }
+  ],
+  "scene": { "kind": "mesh" },
+  "cta": {
+    "headline": { "zh": "别盲拉 1.4TB。先跑一条命令。", "en": "Don't pull 1.4TB blind. Run one command first." },
+    "sub": { "zh": "本地、开源、秒级出答案。", "en": "Local, open-source, answers in a second." },
+    "button": { "zh": "看 GitHub", "en": "View on GitHub" }
+  },
+  "footer": { "tag": { "zh": "MIT 开源 · 本地算术 · 不碰模型文件", "en": "MIT open-source · local arithmetic · never touches model files" } }
+}
