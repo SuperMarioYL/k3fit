@@ -1,0 +1,38 @@
+{
+  "mode": "auto",
+  "id": "5ee656-6ae7a6-cbf6ac-fe6927514783",
+  "identity": "https://github.com/supermarioyl/k3fit",
+  "primary": "#5ee656",
+  "secondary": "#6ae7a6",
+  "highlight": "#cbf6ac",
+  "dark": {
+    "bg": "#050c0d",
+    "panel": "#0c1717",
+    "code": "#0a1713",
+    "ink": "#f5fdee",
+    "muted": "#97b9a8",
+    "line": "#193c1d",
+    "primary": "#5ee656",
+    "secondary": "#6ae7a6",
+    "highlight": "#cbf6ac",
+    "accent": "#5ee656",
+    "buttonStart": "#378632",
+    "buttonEnd": "#3d845f",
+    "buttonText": "#ffffff"
+  },
+  "light": {
+    "bg": "#f9fef9",
+    "panel": "#f7fef7",
+    "code": "#f4fdf3",
+    "ink": "#142a1c",
+    "muted": "#577b6b",
+    "line": "#cef7cb",
+    "primary": "#368331",
+    "secondary": "#3b815d",
+    "highlight": "#657a56",
+    "accent": "#368331",
+    "buttonStart": "#378632",
+    "buttonEnd": "#3d845f",
+    "buttonText": "#ffffff"
+  }
+}

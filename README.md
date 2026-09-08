@@ -1,138 +1,185 @@
-<div align="right"><sub><b>EN</b>&nbsp;&nbsp;⇄&nbsp;&nbsp;<a href="./README.zh-CN.md">中文</a></sub></div>
+**English** | [简体中文](README.zh-CN.md)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/hero-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="./assets/hero-light.svg">
-  <img src="./assets/hero-light.svg" width="880" alt="K3Fit">
+  <source media="(max-width: 640px) and (prefers-color-scheme: dark)" srcset="assets/presentation/hero-mobile-dark.svg">
+  <source media="(max-width: 640px)" srcset="assets/presentation/hero-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/presentation/hero-dark.svg">
+  <img src="assets/presentation/hero-light.svg" width="1000" alt="Compare quant tiers, context memory and VRAM budgets under an embedded K3 model profile.">
 </picture>
 
-<p align="center"><sub>K3Fit is the Go CLI that sizes <b>Kimi K3</b> for your rig before downloading 1.4&nbsp;TB.</sub></p>
+**Compare quant tiers, context memory and VRAM budgets under an embedded K3 model profile.**
 
-<p align="center">
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="license"></a>
-  <a href="https://github.com/SuperMarioYL/k3fit/releases"><img src="https://img.shields.io/github/v/release/SuperMarioYL/k3fit" alt="release"></a>
-  <img src="https://img.shields.io/github/actions/workflow/status/SuperMarioYL/k3fit/ci.yml?label=CI" alt="CI">
-  <img src="https://img.shields.io/badge/Go-1.24-00ADD8?logo=go&logoColor=white" alt="Go">
-  <img src="https://img.shields.io/badge/Kimi%20K3-fit%20planner-5E5CE6" alt="Kimi K3">
-</p>
+`v0.1.0` · `Go 1.24+` · [MIT](LICENSE)
 
-**Don't download 1.4&nbsp;TB of Kimi K3 until you run this one command.**
+[Website](https://k3fit.lei6393.com) · [Demo record](docs/demo-results.json)
 
-K3Fit is a one-command Go CLI that uses Kimi K3's Delta-Attention memory model to pick your max-context, GGUF quant, and expert-routing — and reports a predicted tps before you commit to a 1.4&nbsp;TB download, so your Agent workflows and homelab rigs are sized correctly the first time.
+## Why use it
 
-<h2><img src="https://api.iconify.design/tabler:topology-star-3.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> Architecture</h2>
+Before downloading and deploying large weights, explicit model assumptions can support a preliminary memory account. K3Fit separates fixed state, per-token KV, active experts and quant coefficients to produce estimates per tier. Its constants are marked schema-unverified in source and must be checked against the actual model.
+
+## Architecture
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/atlas-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="./assets/atlas-light.svg">
-  <img src="./assets/atlas-light.svg" width="880" alt="K3Fit pipeline: CLI flags → Delta-Attention account → quant+fit solver → tps+report">
+  <source media="(max-width: 640px) and (prefers-color-scheme: dark)" srcset="assets/presentation/architecture-mobile-dark.svg">
+  <source media="(max-width: 640px)" srcset="assets/presentation/architecture-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/presentation/architecture-dark.svg">
+  <img src="assets/presentation/architecture-light.svg" width="1000" alt="model computes fixed-state and KV memory; quant supplies bits-per-weight values. fit subtracts active weights and fixed state from VRAM to derive a maximum context. tps divides a fixed 240 GB/s constant by active weights. Reports retain per-tier estimates without running inference.">
 </picture>
 
-K3Fit is pure arithmetic over a fixed K3 architecture spec + a GGUF quant table — one process, no network, no model file. The core primitive is the **Delta-Attention memory account**: 69 of 93 layers replace the per-token KV cache with a fixed 128×128 state matrix per head, so a 1M-context memory profile is 3.9× smaller than what generic KV-cache profilers compute.
+model computes fixed-state and KV memory; quant supplies bits-per-weight values. fit subtracts active weights and fixed state from VRAM to derive a maximum context. tps divides a fixed 240 GB/s constant by active weights. Reports retain per-tier estimates without running inference.
 
-<h2><img src="https://api.iconify.design/tabler:rocket.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> Install & Quickstart</h2>
+Assumptions are in [spec.go](internal/model/spec.go), with formulas in [delta_attention.go](internal/model/delta_attention.go) and [planner.go](internal/fit/planner.go). --ram is currently retained for reporting and is not enforced by the fit solver.
 
-```bash
-go install github.com/SuperMarioYL/k3fit/cmd/k3fit@latest
-k3fit --vram 32 --ram 128
-```
+## Install
 
-Or build from source:
+Requires Go 1.24+. The calculation needs no GPU, model file or model service.
 
 ```bash
 git clone https://github.com/SuperMarioYL/k3fit.git
-cd k3fit && go build -o k3fit ./cmd/k3fit
-./k3fit --vram 32 --ram 128
+cd k3fit
+go build -o k3fit ./cmd/k3fit
 ```
 
-<details><summary>sample output</summary>
+## Quickstart
 
+Two explicit budget scenarios run the real CLI and exercise its formulas. They do not verify official K3 specifications, run a model or measure throughput; ratios and ranges are calculations under the embedded assumptions.
+
+```bash
+go run ./cmd/k3fit --vram 32 --ram 128
+go run ./cmd/k3fit --vram 96 --ram 256 --quant Q3_K_M
 ```
+
+All inputs are command-line budgets, retained in [examples/presentation_demo.sh](examples/presentation_demo.sh). The profile test snapshot is [testdata/k3spec_golden.json](testdata/k3spec_golden.json).
+
+## Usage
+
+--vram and --ram are required GiB values. --quant restricts a tier and --ctx selects a context to inspect in the report. By default, all quant tiers are considered and recommendation prioritizes maximum context, not model quality.
+
+## Recorded demo
+
+<picture>
+  <source media="(max-width: 640px) and (prefers-color-scheme: dark)" srcset="assets/presentation/process-mobile-dark.svg">
+  <source media="(max-width: 640px)" srcset="assets/presentation/process-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/presentation/process-dark.svg">
+  <img src="assets/presentation/process-light.svg" width="1000" alt="Two explicit budget scenarios run the real CLI and exercise its formulas. They do not verify official K3 specifications, run a model or measure throughput; ratios and ranges are calculations under the embedded assumptions.">
+</picture>
+
+### Enumerate quant tiers
+
+Calculate per-tier results under a 32 GiB VRAM budget.
+
+```text
+$ go run ./cmd/k3fit --vram 32 --ram 128
+
 K3Fit — Kimi K3 Delta-Attention Fit Planner
 ══════════════════════════════════════════════════════════
 Rig:  32 GiB VRAM | 128 GiB RAM
-Model: Kimi K3 — 2.8T params, MoE 896×16, 93 layers (69 Delta-Attention + 24 KV)
+Model: Kimi K3 — 3T params, MoE 896×16, 93 layers (69 Delta-Attention + 24 KV)
 
 Delta-Attention memory at 1M context
-  DA matrix (69 layers)     0.00 GiB  fixed
-  KV cache (24 layers)    22.89 GiB  per-ctx
-  Total (Delta-Attention) 22.89 GiB
-  (Standard KV all 93)   88.69 GiB  — what generic profilers compute
-  Delta-Attention saves 3.9× at 1M context.
++--------------------------------------------------+-------+------------------------------------------+
+|                    COMPONENT                     |  GIB  |                  NOTES                   |
++--------------------------------------------------+-------+------------------------------------------+
+| DA matrix (69 layers × 2 heads × 128×128 × fp16) |  0.00 | 128×128 matrix/head, context-independent |
+| KV cache (24 layers × 1M tokens)                 | 22.89 | standard per-token KV cache              |
+| Total (Delta-Attention)                          | 22.89 | at 1M ctx                                |
+| (Standard KV — all 93 layers)                    | 88.69 | what generic profilers compute           |
++--------------------------------------------------+-------+------------------------------------------+
+Delta-Attention saves 3.9× vs standard KV-cache at 1M context.
+
+Quant fit analysis (VRAM = 32 GiB)
++--------+-------+-------------+---------+---------+-------+
+| QUANT  |  BPW  | WEIGHTS GIB | MAX CTX | STD CTX | FITS? |
++--------+-------+-------------+---------+---------+-------+
+| Q2_K   |  2.56 |       835.3 |  589837 |    512K |  yes  |
+| Q3_K_S |  2.75 |       896.4 |  530709 |    512K |  yes  |
+| Q3_K_M |  3.27 |      1065.9 |  366728 |    256K |  yes  |
+| Q4_K_S |  3.50 |      1140.9 |  294198 |    256K |  yes  |
+| Q4_K_M |  4.25 |      1385.3 |   57687 |     32K |  yes  |
+| Q5_K_S |  5.00 |      1629.8 |       — |       — |  no   |
+| Q5_K_M |  5.25 |      1711.3 |       — |       — |  no   |
+| Q6_K   |  6.10 |      1988.4 |       — |       — |  no   |
+| Q8_0   |  8.00 |      2607.7 |       — |       — |  no   |
+| F16    | 16.00 |      5215.4 |       — |       — |  no   |
++--------+-------+-------------+---------+---------+-------+
+Weights GiB = total model on disk (mmap). Max Ctx = VRAM-resident ceiling.
 
 ──────────────────────────────────────────────────────────
 Recommendation: Q2_K at 512K context
 Expert routing:  16 of 896 experts active per token (1.8% activation)
 Predicted decoding tps ≈ 12 (heuristic, ±30% → 8–16)
 Disk required:  ~835 GiB (Q2_K GGUF)
-VRAM at 512K:  30.5 GiB / 32 GiB budget
-1M context:  does NOT fit at any quant — max is 589837 tokens (576K) at Q2_K
+VRAM at 512K:      30.5 GiB (weights 18.5 + ctx 12.0) / 32 GiB budget
+1M context:      does NOT fit at any quant — max is 589837 tokens (576K) at Q2_K
 ```
 
-</details>
+### Constrain the quant tier
 
-<h2><img src="https://api.iconify.design/tabler:terminal-2.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> Usage</h2>
+Recalculate for 96 GiB VRAM and Q3_K_M.
 
-```bash
-# Full fit + quant + routing + predicted tps
-k3fit --vram 32 --ram 128
+```text
+$ go run ./cmd/k3fit --vram 96 --ram 256 --quant Q3_K_M
 
-# Constrain to a specific quant tier
-k3fit --vram 96 --ram 256 --quant Q3_K_M
+K3Fit — Kimi K3 Delta-Attention Fit Planner
+══════════════════════════════════════════════════════════
+Rig:  96 GiB VRAM | 256 GiB RAM
+Model: Kimi K3 — 3T params, MoE 896×16, 93 layers (69 Delta-Attention + 24 KV)
 
-# Check a specific context size
-k3fit --vram 32 --ram 128 --ctx 512000
+Delta-Attention memory at 1M context
++--------------------------------------------------+-------+------------------------------------------+
+|                    COMPONENT                     |  GIB  |                  NOTES                   |
++--------------------------------------------------+-------+------------------------------------------+
+| DA matrix (69 layers × 2 heads × 128×128 × fp16) |  0.00 | 128×128 matrix/head, context-independent |
+| KV cache (24 layers × 1M tokens)                 | 22.89 | standard per-token KV cache              |
+| Total (Delta-Attention)                          | 22.89 | at 1M ctx                                |
+| (Standard KV — all 93 layers)                    | 88.69 | what generic profilers compute           |
++--------------------------------------------------+-------+------------------------------------------+
+Delta-Attention saves 3.9× vs standard KV-cache at 1M context.
+
+Quant fit analysis (VRAM = 96 GiB)
++--------+------+-------------+---------+---------+-------+
+| QUANT  | BPW  | WEIGHTS GIB | MAX CTX | STD CTX | FITS? |
++--------+------+-------------+---------+---------+-------+
+| Q3_K_M | 3.27 |      1065.9 | 1000000 |      1M |  yes  |
++--------+------+-------------+---------+---------+-------+
+Weights GiB = total model on disk (mmap). Max Ctx = VRAM-resident ceiling.
+
+──────────────────────────────────────────────────────────
+Recommendation: Q3_K_M at 1M context
+Expert routing:  16 of 896 experts active per token (1.8% activation)
+Predicted decoding tps ≈ 9 (heuristic, ±30% → 7–12)
+Disk required:  ~1066 GiB (Q3_K_M GGUF)
+VRAM at 1M:      46.5 GiB (weights 23.6 + ctx 22.9) / 96 GiB budget
+1M context:      fits at Q3_K_M
 ```
 
-| Flag | Type | Default | Meaning |
-|---|---|---|---|
-| `--vram` (`-v`) | GiB | required | VRAM budget |
-| `--ram` (`-r`) | GiB | required | System RAM budget (mmap working set) |
-| `--quant` (`-q`) | string | all tiers | Constrain to one GGUF quant (e.g. `Q2_K`, `Q3_K_M`, `Q4_K_M`) |
-| `--ctx` | int | 0 (auto) | Target context length in tokens |
+## Capabilities and integration
 
-<h2><img src="https://api.iconify.design/tabler:photo.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> Demo</h2>
+<picture>
+  <source media="(max-width: 640px) and (prefers-color-scheme: dark)" srcset="assets/presentation/integrations-mobile-dark.svg">
+  <source media="(max-width: 640px)" srcset="assets/presentation/integrations-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/presentation/integrations-dark.svg">
+  <img src="assets/presentation/integrations-light.svg" width="1000" alt="K3Fit is an inspectable calculator. It does not read GGUF metadata, probe actual hardware or execute inference. Check model specifications, full residency needs and runtime overhead before relying on a deployment decision.">
+</picture>
 
-<img src="./assets/demo.gif" width="880" alt="k3fit --vram 32 --ram 128 output">
+K3Fit is an inspectable calculator. It does not read GGUF metadata, probe actual hardware or execute inference. Check model specifications, full residency needs and runtime overhead before relying on a deployment decision.
 
-Rendered from `docs/demo.tape` via [vhs](https://github.com/charmbracelet/vhs) — see `.github/workflows/demo.yml` to re-render.
 
-<h2><img src="https://api.iconify.design/tabler:bulb.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> Why this exists</h2>
 
-Kimi K3 is a 1.4&nbsp;TB, 2.8&nbsp;T-parameter MoE model with a novel Delta-Attention architecture: 69 of 93 layers replace the per-token KV cache with a 128×128 state matrix per head, dropping 1M-context memory from ~89&nbsp;GiB to ~23&nbsp;GiB. Local-LLM operators who want to run it must today (a) hunt down a forked llama.cpp branch because upstream doesn't support Delta-Attention, (b) blindly pick a GGUF quant, and (c) discover only after the 1.4&nbsp;TB download that warmup stalls surface at runtime — with no way to predict whether their rig fits the chosen context + quant + expert-routing.
+## Configuration
 
-K3Fit is the Delta-Attention-aware fit-planner that no stock tool models — generic profilers like ctxprof compute the wrong (standard-KV) number for K3, and the [`pwilkin/kimi-k3-text`](https://github.com/pwilkin/llama.cpp/tree/kimi-k3-text) fork ships inference without sizing. The interest in Kimi K3 deployment is concrete and growing — see [`diegosouzapw/OmniRoute`](https://github.com/diegosouzapw/OmniRoute) and the r/LocalLLaMA deployment threads — but no tool tells you *before* the download whether your rig can run it.
+Quant coefficients are in internal/quant/table.go, model constants in internal/model/spec.go and bandwidth in internal/tps/estimate.go. The displayed ±30% range is a fixed proportional band, not an empirical confidence interval. There is no implemented --emit-config or topology option.
 
-### vs generic tooling
+## Roadmap and scope
 
-| Feature axis | K3Fit | stock llama.cpp / Ollama | ctxprof | GrEarl GGUF packs |
-|---|:---:|:---:|:---:|:---:|
-| Delta-Attention memory model | ✓ | — | — | — |
-| Per-quant max-context fit | ✓ | — | partial | — |
-| Predicted decoding tps | ✓ | — | — | — |
-| Expert-routing config | ✓ | — | — | — |
-| No model download needed | ✓ | — | ✓ | — |
-| Runs K3 inference | — | ✓ (fork) | — | — (weights only) |
+Arithmetic memory accounting, quant enumeration, context checks and heuristic throughput estimates are implemented. Device calibration, launch-config export, multi-GPU topology and other model profiles remain future work.
 
-K3Fit is a sizing tool, not a runtime — llama.cpp is still the only path to actually run K3 today. K3Fit tells you whether it's worth the 1.4&nbsp;TB pull *before* you start.
+- Embedded model constants are explicitly schema-unverified, not confirmed official specifications.
+- RAM is not enforced by the fit constraint, and throughput does not use measured device bandwidth.
+- These outputs are not measured performance or a guarantee of successful deployment.
 
-<h2><img src="https://api.iconify.design/tabler:map-2.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> Roadmap</h2>
+[Terminal recording](assets/demo.gif) · [Recording script](docs/demo.tape)
 
-- [x] **m1 — Delta-Attention memory account**: per-component breakdown (DA matrix × 69 layers + KV × 24 layers + active experts + quantized weights), max-context-that-fits per quant tier, ±30% heuristic tps
-- [x] **m2 — Predicted tps + constraint flags**: bandwidth-bound tps estimate, `--quant` / `--ctx` flags
-- [ ] **m3 — Emit config + demo**: `--emit-config` writes llama.cpp fork launch flags, polished terminal demo
-- [ ] On-device tps calibration (v0.2) — replace the heuristic constant with a measured value
-- [ ] Multi-GPU / tensor-parallel topology planning
-- [ ] Non-K3 models (Llama, Qwen, Mistral sizing)
+## License
 
-### Share this
-
-```
-K3Fit — the Go CLI that sizes Kimi K3 for your rig before a 1.4TB download. Delta-Attention-aware memory math, quant fit, predicted tps, no GPU touch. https://github.com/SuperMarioYL/k3fit
-```
-
-<h2><img src="https://api.iconify.design/tabler:license.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> License</h2>
-
-MIT — see [LICENSE](./LICENSE). File issues or PRs at the [GitHub repo](https://github.com/SuperMarioYL/k3fit/issues).
-
-<p align="center"><sub><a href="./LICENSE">MIT</a> © 2026 SuperMarioYL</sub></p>
+[MIT](LICENSE)

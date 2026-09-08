@@ -1,0 +1,90 @@
+{
+  "name": "K3Fit",
+  "tagline": "Explore context and quant tradeoffs under an explicit model profile.",
+  "architecture": {
+    "title": "Embedded assumptions to arithmetic estimates",
+    "nodes": [
+      {
+        "title": "CLI budgets",
+        "detail": "VRAM / RAM / quant / ctx"
+      },
+      {
+        "title": "Model profile",
+        "detail": "Schema-unverified constants"
+      },
+      {
+        "title": "Quant table",
+        "detail": "Bits per weight"
+      },
+      {
+        "title": "Fit + TPS",
+        "detail": "Memory math and fixed bandwidth"
+      },
+      {
+        "title": "Report",
+        "detail": "Per-tier context estimates"
+      }
+    ],
+    "edges": [
+      [
+        0,
+        3
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        4
+      ]
+    ]
+  },
+  "process": {
+    "title": "Compare two explicit budget scenarios",
+    "steps": [
+      {
+        "title": "Provide budgets",
+        "detail": "32/128 and 96/256 GiB"
+      },
+      {
+        "title": "Apply profile",
+        "detail": "Embedded state and KV constants"
+      },
+      {
+        "title": "Inspect estimates",
+        "detail": "All tiers, then constrained Q3_K_M"
+      }
+    ],
+    "result": "Both calculations run offline; reported tps is a heuristic, not a benchmark."
+  },
+  "integrations": {
+    "title": "Planner inputs and report outputs",
+    "items": [
+      {
+        "title": "VRAM budget",
+        "detail": "GiB supplied by the user"
+      },
+      {
+        "title": "Quant tiers",
+        "detail": "Embedded GGUF coefficient table"
+      },
+      {
+        "title": "Context request",
+        "detail": "Optional target token count"
+      },
+      {
+        "title": "Model profile",
+        "detail": "Fixed source constants"
+      },
+      {
+        "title": "Text report",
+        "detail": "Estimated memory and throughput"
+      }
+    ]
+  }
+}

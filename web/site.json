@@ -1,41 +1,244 @@
 {
-  "schema": 1,
-  "name": "k3fit",
+  "schema": 3,
+  "name": "K3Fit",
   "github": "https://github.com/SuperMarioYL/k3fit",
   "host": "k3fit.lei6393.com",
-  "lang": { "primary": "zh", "toggle": true },
-  "accent": ["#e6a144", "#cc7e2e", "#9c5a1f"],
+  "palette": "auto",
+  "lang": {
+    "primary": "en",
+    "toggle": true
+  },
+  "meta": {
+    "visual_profile": "neon-particle",
+    "content_version": "0.1.0",
+    "demo_source": "docs/demo-results.json"
+  },
   "hero": {
-    "eyebrow": { "zh": "本地 · 不下载模型 · 一条命令", "en": "local · no model download · one command" },
-    "headline": { "zh": "下载 1.4TB 之前，先算清你的机器跑不跑得动 Kimi K3", "en": "Know if your rig can run Kimi K3 — before the 1.4TB download" },
-    "sub": { "zh": "输入显存和内存，K3Fit 用 Kimi K3 的 Delta-Attention 记忆模型算出最大上下文、量化档、专家路由和预测 tps。纯算术，不碰模型文件。", "en": "Enter your VRAM and RAM — K3Fit uses Kimi K3's Delta-Attention memory model to compute max context, quant tier, expert routing, and predicted tps. Pure arithmetic, no model files touched." },
-    "command": "k3fit --vram 32 --ram 128",
-    "cta": { "zh": "看演示", "en": "See it run" },
-    "ctaGithub": { "zh": "GitHub 源码", "en": "GitHub source" },
-    "scroll": { "zh": "为什么", "en": "why" }
+    "eyebrow": {
+      "zh": "在内置 K3 模型假设下，比较量化层级、context 内存与显存预算。",
+      "en": "Compare quant tiers, context memory and VRAM budgets under an embedded K3 model profile."
+    },
+    "headline": {
+      "zh": "先把内存账算清，\n再验证运行结果",
+      "en": "Explore the memory budget.\nThen validate the runtime."
+    },
+    "sub": {
+      "zh": "在内置 K3 模型假设下，比较量化层级、context 内存与显存预算。",
+      "en": "Compare quant tiers, context memory and VRAM budgets under an embedded K3 model profile."
+    },
+    "href": "#quickstart",
+    "cta": {
+      "zh": "运行示例",
+      "en": "Run the example"
+    },
+    "ctaGithub": {
+      "zh": "查看源码",
+      "en": "View source"
+    }
+  },
+  "scene": {
+    "kind": "neon-graph",
+    "caption": {
+      "zh": "显式预算 · 模型假设",
+      "en": "EXPLICIT BUDGETS · MODEL ASSUMPTIONS"
+    },
+    "fallback": "/assets/presentation/scene-dark.svg",
+    "fallbackLight": "/assets/presentation/scene-light.svg"
   },
   "advantages": [
     {
-      "title": { "zh": "下载前就给你答案", "en": "Answers before you download" },
-      "body": { "zh": "1.4TB 的下载要花一整天。一条命令告诉你能开多大上下文、哪档量化放得下、预测 tps 多少——再决定要不要拉。", "en": "A 1.4TB download takes a day. One command tells you the max context, which quant tier fits, and predicted tps — so you decide whether to pull." },
-      "chips": ["› 每档量化最大上下文", "› 预测 tps ±30%", "› 不下载任何模型文件"]
+      "title": {
+        "zh": "拆开内存分量",
+        "en": "Separate memory components"
+      },
+      "body": {
+        "zh": "固定状态、KV 和活动权重分别计算。",
+        "en": "Fixed state, KV and active weights are accounted separately."
+      }
     },
     {
-      "title": { "zh": "为 Kimi K3 的 Delta-Attention 量身计算", "en": "Sized for Kimi K3's Delta-Attention" },
-      "body": { "zh": "K3 用 Delta-Attention 替换 69/93 层的 KV cache。标准 KV 计算会算错（1M 上下文 27.2 vs 104.6 GiB）。K3Fit 按真实架构算，不套通用公式。", "en": "K3 replaces KV cache with Delta-Attention in 69 of 93 layers. Standard KV math gets it wrong (1M ctx: 27.2 vs 104.6 GiB). K3Fit computes against the real architecture, not a generic formula." },
-      "chips": ["› 69 层 Delta-Attention", "› 24 层标准 KV", "› 896 专家 MoE"]
+      "title": {
+        "zh": "比较量化层级",
+        "en": "Compare quant tiers"
+      },
+      "body": {
+        "zh": "同一预算下查看各档 context 估计。",
+        "en": "Inspect per-tier context estimates under one budget."
+      }
     },
     {
-      "title": { "zh": "一条命令，零依赖", "en": "One command, zero dependencies" },
-      "body": { "zh": "单 Go 二进制，秒级输出一张表：每档量化能开多大上下文、占多少显存、预测多快。不用装 Python，不用配环境。", "en": "A single Go binary prints a table in under a second: max context per quant, memory used, predicted speed. No Python, no environment setup." },
-      "chips": ["› 单二进制", "› <1 秒出表", "› Go CLI · Homebrew 装机"]
+      "title": {
+        "zh": "无需下载模型",
+        "en": "No model download"
+      },
+      "body": {
+        "zh": "输入为预算与源码中的 profile，计算可离线执行。",
+        "en": "Budgets and the source profile are enough for an offline calculation."
+      }
     }
   ],
-  "scene": { "kind": "mesh" },
-  "cta": {
-    "headline": { "zh": "别盲拉 1.4TB。先跑一条命令。", "en": "Don't pull 1.4TB blind. Run one command first." },
-    "sub": { "zh": "本地、开源、秒级出答案。", "en": "Local, open-source, answers in a second." },
-    "button": { "zh": "看 GitHub", "en": "View on GitHub" }
+  "story": {
+    "intro": {
+      "title": {
+        "zh": "把估算依据摆出来",
+        "en": "Expose the assumptions behind an estimate"
+      },
+      "body": {
+        "zh": "计划下载和部署大权重前，可以先按明确的模型参数计算权重与上下文内存。K3Fit 将固定状态层、逐 token KV、活动专家和量化系数分开计算，输出每档估计。它的模型常量在源码中标为 schema-unverified，需要与你实际使用的模型核对。",
+        "en": "Before downloading and deploying large weights, explicit model assumptions can support a preliminary memory account. K3Fit separates fixed state, per-token KV, active experts and quant coefficients to produce estimates per tier. Its constants are marked schema-unverified in source and must be checked against the actual model."
+      }
+    },
+    "sections": [
+      {
+        "title": {
+          "zh": "从输入到结果",
+          "en": "From input to result"
+        },
+        "body": {
+          "zh": "两个明确预算场景运行真实 CLI，结果仅验证内置公式的执行。没有核对官方 K3 规格、运行模型或测量吞吐；报告中的倍数与百分比都是给定假设下的计算值。",
+          "en": "Two explicit budget scenarios run the real CLI and exercise its formulas. They do not verify official K3 specifications, run a model or measure throughput; ratios and ranges are calculations under the embedded assumptions."
+        },
+        "image": {
+          "light": "/assets/presentation/process-light.svg",
+          "dark": "/assets/presentation/process-dark.svg",
+          "alt": {
+            "zh": "两个明确预算场景运行真实 CLI，结果仅验证内置公式的执行。没有核对官方 K3 规格、运行模型或测量吞吐；报告中的倍数与百分比都是给定假设下的计算值。",
+            "en": "Two explicit budget scenarios run the real CLI and exercise its formulas. They do not verify official K3 specifications, run a model or measure throughput; ratios and ranges are calculations under the embedded assumptions."
+          }
+        }
+      },
+      {
+        "title": {
+          "zh": "工作原理",
+          "en": "How it works"
+        },
+        "body": {
+          "zh": "model 计算固定状态与 KV 内存；quant 提供 bits-per-weight 表；fit 用显存减去活动权重与固定状态，求最大 context；tps 用固定 240 GB/s 常量除以活动权重。报告保留每档结果，未运行推理。",
+          "en": "model computes fixed-state and KV memory; quant supplies bits-per-weight values. fit subtracts active weights and fixed state from VRAM to derive a maximum context. tps divides a fixed 240 GB/s constant by active weights. Reports retain per-tier estimates without running inference."
+        },
+        "image": {
+          "light": "/assets/presentation/architecture-light.svg",
+          "dark": "/assets/presentation/architecture-dark.svg",
+          "alt": {
+            "zh": "model 计算固定状态与 KV 内存；quant 提供 bits-per-weight 表；fit 用显存减去活动权重与固定状态，求最大 context；tps 用固定 240 GB/s 常量除以活动权重。报告保留每档结果，未运行推理。",
+            "en": "model computes fixed-state and KV memory; quant supplies bits-per-weight values. fit subtracts active weights and fixed state from VRAM to derive a maximum context. tps divides a fixed 240 GB/s constant by active weights. Reports retain per-tier estimates without running inference."
+          }
+        }
+      },
+      {
+        "title": {
+          "zh": "能力与接入",
+          "en": "Capabilities and integration"
+        },
+        "body": {
+          "zh": "K3Fit 是一个假设可检查的计算器，不读取 GGUF 元数据或实际硬件，也不执行推理。下载与硬件选型前仍需验证模型规格、完整权重驻留需求和运行时开销。",
+          "en": "K3Fit is an inspectable calculator. It does not read GGUF metadata, probe actual hardware or execute inference. Check model specifications, full residency needs and runtime overhead before relying on a deployment decision."
+        },
+        "image": {
+          "light": "/assets/presentation/integrations-light.svg",
+          "dark": "/assets/presentation/integrations-dark.svg",
+          "alt": {
+            "zh": "K3Fit 是一个假设可检查的计算器，不读取 GGUF 元数据或实际硬件，也不执行推理。下载与硬件选型前仍需验证模型规格、完整权重驻留需求和运行时开销。",
+            "en": "K3Fit is an inspectable calculator. It does not read GGUF metadata, probe actual hardware or execute inference. Check model specifications, full residency needs and runtime overhead before relying on a deployment decision."
+          }
+        }
+      }
+    ],
+    "details": [
+      {
+        "title": {
+          "zh": "RAM 不是当前约束",
+          "en": "RAM is not currently enforced"
+        },
+        "body": {
+          "zh": "--ram 会显示在报告里，但 solver 仅按显存计算 context；不能据此证明内存足够。",
+          "en": "--ram is displayed, but the solver computes context from VRAM; the report does not prove sufficient system RAM."
+        }
+      }
+    ]
   },
-  "footer": { "tag": { "zh": "MIT 开源 · 本地算术 · 不碰模型文件", "en": "MIT open-source · local arithmetic · never touches model files" } }
+  "demo": {
+    "title": {
+      "zh": "实际运行结果",
+      "en": "Actual demo output"
+    },
+    "note": {
+      "zh": "两个明确预算场景运行真实 CLI，结果仅验证内置公式的执行。没有核对官方 K3 规格、运行模型或测量吞吐；报告中的倍数与百分比都是给定假设下的计算值。",
+      "en": "Two explicit budget scenarios run the real CLI and exercise its formulas. They do not verify official K3 specifications, run a model or measure throughput; ratios and ranges are calculations under the embedded assumptions."
+    },
+    "source": "https://github.com/SuperMarioYL/k3fit/blob/main/docs/demo-results.json",
+    "steps": [
+      {
+        "label": {
+          "zh": "遍历量化表",
+          "en": "Enumerate quant tiers"
+        },
+        "body": {
+          "zh": "按 32 GiB 显存预算计算各档结果。",
+          "en": "Calculate per-tier results under a 32 GiB VRAM budget."
+        },
+        "command": "go run ./cmd/k3fit --vram 32 --ram 128",
+        "output": "\nK3Fit — Kimi K3 Delta-Attention Fit Planner\n══════════════════════════════════════════════════════════\nRig:  32 GiB VRAM | 128 GiB RAM\nModel: Kimi K3 — 3T params, MoE 896×16, 93 layers (69 Delta-Attention + 24 KV)\n\nDelta-Attention memory at 1M context\n+--------------------------------------------------+-------+------------------------------------------+\n|                    COMPONENT                     |  GIB  |                  NOTES                   |\n+--------------------------------------------------+-------+------------------------------------------+\n| DA matrix (69 layers × 2 heads × 128×128 × fp16) |  0.00 | 128×128 matrix/head, context-independent |\n| KV cache (24 layers × 1M tokens)                 | 22.89 | standard per-token KV cache              |\n| Total (Delta-Attention)                          | 22.89 | at 1M ctx                                |\n| (Standard KV — all 93 layers)                    | 88.69 | what generic profilers compute           |\n+--------------------------------------------------+-------+------------------------------------------+\nDelta-Attention saves 3.9× vs standard KV-cache at 1M context.\n\nQuant fit analysis (VRAM = 32 GiB)\n+--------+-------+-------------+---------+---------+-------+\n| QUANT  |  BPW  | WEIGHTS GIB | MAX CTX | STD CTX | FITS? |\n+--------+-------+-------------+---------+---------+-------+\n| Q2_K   |  2.56 |       835.3 |  589837 |    512K |  yes  |\n| Q3_K_S |  2.75 |       896.4 |  530709 |    512K |  yes  |\n| Q3_K_M |  3.27 |      1065.9 |  366728 |    256K |  yes  |\n| Q4_K_S |  3.50 |      1140.9 |  294198 |    256K |  yes  |\n| Q4_K_M |  4.25 |      1385.3 |   57687 |     32K |  yes  |\n| Q5_K_S |  5.00 |      1629.8 |       — |       — |  no   |\n| Q5_K_M |  5.25 |      1711.3 |       — |       — |  no   |\n| Q6_K   |  6.10 |      1988.4 |       — |       — |  no   |\n| Q8_0   |  8.00 |      2607.7 |       — |       — |  no   |\n| F16    | 16.00 |      5215.4 |       — |       — |  no   |\n+--------+-------+-------------+---------+---------+-------+\nWeights GiB = total model on disk (mmap). Max Ctx = VRAM-resident ceiling.\n\n──────────────────────────────────────────────────────────\nRecommendation: Q2_K at 512K context\nExpert routing:  16 of 896 experts active per token (1.8% activation)\nPredicted decoding tps ≈ 12 (heuristic, ±30% → 8–16)\nDisk required:  ~835 GiB (Q2_K GGUF)\nVRAM at 512K:      30.5 GiB (weights 18.5 + ctx 12.0) / 32 GiB budget\n1M context:      does NOT fit at any quant — max is 589837 tokens (576K) at Q2_K\n\n",
+        "image": "/assets/presentation/demo-0-light.svg",
+        "imageDark": "/assets/presentation/demo-0-dark.svg"
+      },
+      {
+        "label": {
+          "zh": "限制量化档",
+          "en": "Constrain the quant tier"
+        },
+        "body": {
+          "zh": "按 96 GiB 显存和 Q3_K_M 再计算。",
+          "en": "Recalculate for 96 GiB VRAM and Q3_K_M."
+        },
+        "command": "go run ./cmd/k3fit --vram 96 --ram 256 --quant Q3_K_M",
+        "output": "\nK3Fit — Kimi K3 Delta-Attention Fit Planner\n══════════════════════════════════════════════════════════\nRig:  96 GiB VRAM | 256 GiB RAM\nModel: Kimi K3 — 3T params, MoE 896×16, 93 layers (69 Delta-Attention + 24 KV)\n\nDelta-Attention memory at 1M context\n+--------------------------------------------------+-------+------------------------------------------+\n|                    COMPONENT                     |  GIB  |                  NOTES                   |\n+--------------------------------------------------+-------+------------------------------------------+\n| DA matrix (69 layers × 2 heads × 128×128 × fp16) |  0.00 | 128×128 matrix/head, context-independent |\n| KV cache (24 layers × 1M tokens)                 | 22.89 | standard per-token KV cache              |\n| Total (Delta-Attention)                          | 22.89 | at 1M ctx                                |\n| (Standard KV — all 93 layers)                    | 88.69 | what generic profilers compute           |\n+--------------------------------------------------+-------+------------------------------------------+\nDelta-Attention saves 3.9× vs standard KV-cache at 1M context.\n\nQuant fit analysis (VRAM = 96 GiB)\n+--------+------+-------------+---------+---------+-------+\n| QUANT  | BPW  | WEIGHTS GIB | MAX CTX | STD CTX | FITS? |\n+--------+------+-------------+---------+---------+-------+\n| Q3_K_M | 3.27 |      1065.9 | 1000000 |      1M |  yes  |\n+--------+------+-------------+---------+---------+-------+\nWeights GiB = total model on disk (mmap). Max Ctx = VRAM-resident ceiling.\n\n──────────────────────────────────────────────────────────\nRecommendation: Q3_K_M at 1M context\nExpert routing:  16 of 896 experts active per token (1.8% activation)\nPredicted decoding tps ≈ 9 (heuristic, ±30% → 7–12)\nDisk required:  ~1066 GiB (Q3_K_M GGUF)\nVRAM at 1M:      46.5 GiB (weights 23.6 + ctx 22.9) / 96 GiB budget\n1M context:      fits at Q3_K_M\n\n",
+        "image": "/assets/presentation/demo-1-light.svg",
+        "imageDark": "/assets/presentation/demo-1-dark.svg"
+      }
+    ]
+  },
+  "quickstart": {
+    "title": {
+      "zh": "从完整输入开始",
+      "en": "Start with complete input"
+    },
+    "body": {
+      "zh": "需要 Go 1.24+。计算不需要 GPU、模型文件或模型服务。",
+      "en": "Requires Go 1.24+. The calculation needs no GPU, model file or model service."
+    },
+    "steps": [
+      {
+        "title": {
+          "zh": "安装",
+          "en": "Install"
+        },
+        "code": "git clone https://github.com/SuperMarioYL/k3fit.git\ncd k3fit\ngo build -o k3fit ./cmd/k3fit"
+      },
+      {
+        "title": {
+          "zh": "运行自带示例",
+          "en": "Run the supplied example"
+        },
+        "code": "go run ./cmd/k3fit --vram 32 --ram 128\ngo run ./cmd/k3fit --vram 96 --ram 256 --quant Q3_K_M"
+      }
+    ]
+  },
+  "limitations": [
+    {
+      "zh": "内置模型参数明确未完成 schema 验证，不应当作已核实官方规格。",
+      "en": "Embedded model constants are explicitly schema-unverified, not confirmed official specifications."
+    },
+    {
+      "zh": "RAM 未进入 fit 约束，吞吐估计也未读取硬件带宽。",
+      "en": "RAM is not enforced by the fit constraint, and throughput does not use measured device bandwidth."
+    },
+    {
+      "zh": "这些输出不构成实测性能或部署成功保证。",
+      "en": "These outputs are not measured performance or a guarantee of successful deployment."
+    }
+  ],
+  "footer": {
+    "tag": "0.1.0 · Go 1.24+ · MIT"
+  }
 }
