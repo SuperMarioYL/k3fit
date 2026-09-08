@@ -5,10 +5,12 @@ package report
 import (
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/SuperMarioYL/k3fit/internal/fit"
 	"github.com/SuperMarioYL/k3fit/internal/model"
+	"github.com/SuperMarioYL/k3fit/internal/tps"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -21,8 +23,8 @@ func RenderPlan(plan *fit.Plan, w io.Writer) {
 	fmt.Fprintf(w, "K3Fit — Kimi K3 Delta-Attention Fit Planner\n")
 	fmt.Fprintln(w, strings.Repeat("═", 58))
 	fmt.Fprintf(w, "Rig:  %.0f GiB VRAM | %.0f GiB RAM\n", plan.VRAMGiB, plan.RAMGiB)
-	fmt.Fprintf(w, "Model: Kimi K3 — %.0fT params, MoE %d×%d, %d layers (%d Delta-Attention + %d KV)\n",
-		spec.TotalParamsB/1000, spec.ExpertsTotal, spec.ExpertsActive,
+	fmt.Fprintf(w, "Model: Kimi K3 — %s params, MoE %d×%d, %d layers (%d Delta-Attention + %d KV)\n",
+		fmtParamsT(spec.TotalParamsB), spec.ExpertsTotal, spec.ExpertsActive,
 		spec.TotalLayers, spec.DALayers, spec.KVLayers)
 	fmt.Fprintln(w)
 
@@ -120,7 +122,7 @@ func renderRecommendation(plan *fit.Plan, w io.Writer) {
 	}
 
 	r := plan.Recommended
-	low, high := rangeBounds(r.TPS)
+	low, high := tps.Range(r.TPS)
 
 	// Recompute context memory at the recommended standard context (not maxCtx)
 	// so the VRAM line reflects what the user will actually run.
@@ -138,6 +140,7 @@ func renderRecommendation(plan *fit.Plan, w io.Writer) {
 	fmt.Fprintf(w, "Disk required:  ~%.0f GiB (%s GGUF)\n", r.WeightsGiB, r.Quant.Name)
 	fmt.Fprintf(w, "VRAM at %s:      %.1f GiB (weights %.1f + ctx %.1f) / %.0f GiB budget\n",
 		fmtCtx(r.StandardCtx), stdVRAMTotal, r.VRAMWeightsGiB, stdCtxMem, plan.VRAMGiB)
+	renderRAMWarning(r, plan.RAMGiB, w)
 
 	if r.Fits1M {
 		fmt.Fprintf(w, "1M context:      fits at %s\n", r.Quant.Name)
@@ -146,6 +149,18 @@ func renderRecommendation(plan *fit.Plan, w io.Writer) {
 			r.MaxContext, fmtCtx(r.MaxContext), r.Quant.Name)
 	}
 	fmt.Fprintln(w)
+}
+
+// renderRAMWarning prints the RAM-budget gate for the chosen tier: when the
+// on-disk weights (the mmap working set) exceed the RAM budget, the OS pages
+// weights from disk and the RAM-bandwidth bound behind the tps heuristic does
+// not hold. Silent when the working set fits.
+func renderRAMWarning(r *fit.FitResult, ramGiB float64, w io.Writer) {
+	if r.WeightsFitRAM {
+		return
+	}
+	fmt.Fprintf(w, "RAM warning:     weights %.0f GiB exceed the %.0f GiB RAM budget — mmap will page from disk; the tps estimate assumes RAM-resident weights\n",
+		r.WeightsGiB, ramGiB)
 }
 
 // RenderConstrained writes a report focused on a user-specified --ctx target:
@@ -160,8 +175,8 @@ func RenderConstrained(plan *fit.Plan, targetCtx int, w io.Writer) {
 	fmt.Fprintln(w, strings.Repeat("═", 58))
 	fmt.Fprintf(w, "Rig:  %.0f GiB VRAM | %.0f GiB RAM\n", plan.VRAMGiB, plan.RAMGiB)
 	fmt.Fprintf(w, "Target: %s context\n", fmtCtx(targetCtx))
-	fmt.Fprintf(w, "Model: Kimi K3 — %.0fT params, MoE %d×%d, %d layers (%d Delta-Attention + %d KV)\n",
-		spec.TotalParamsB/1000, spec.ExpertsTotal, spec.ExpertsActive,
+	fmt.Fprintf(w, "Model: Kimi K3 — %s params, MoE %d×%d, %d layers (%d Delta-Attention + %d KV)\n",
+		fmtParamsT(spec.TotalParamsB), spec.ExpertsTotal, spec.ExpertsActive,
 		spec.TotalLayers, spec.DALayers, spec.KVLayers)
 	fmt.Fprintln(w)
 
@@ -215,20 +230,66 @@ func RenderConstrained(plan *fit.Plan, targetCtx int, w io.Writer) {
 		return
 	}
 
-	low, high := rangeBounds(bestFit.TPS)
+	low, high := tps.Range(bestFit.TPS)
 	fmt.Fprintln(w, strings.Repeat("─", 58))
 	fmt.Fprintf(w, "Best quant for %s context: %s\n", fmtCtx(targetCtx), bestFit.Quant.Name)
 	fmt.Fprintf(w, "Expert routing:  %d of %d experts active per token (%.1f%% activation)\n",
 		spec.ExpertsActive, spec.ExpertsTotal, spec.ExpertActivationRatio()*100)
 	fmt.Fprintf(w, "Predicted decoding tps ≈ %.0f (heuristic, ±30%% → %.0f–%.0f)\n",
 		bestFit.TPS, low, high)
-	fmt.Fprintf(w, "Disk required:  ~%.0f GiB (%s GGUF)\n\n", bestFit.WeightsGiB, bestFit.Quant.Name)
+	fmt.Fprintf(w, "Disk required:  ~%.0f GiB (%s GGUF)\n", bestFit.WeightsGiB, bestFit.Quant.Name)
+	renderRAMWarning(bestFit, plan.RAMGiB, w)
+	fmt.Fprintln(w)
+}
+
+// RenderConfig writes the suggested llama.cpp launch flags for the plan's
+// recommended tier, targeting the pwilkin/kimi-k3-text fork. The block is a
+// suggestion to verify against the fork's current flag surface — K3Fit never
+// touches a GGUF file or a runtime. targetCtx (> 0) is honoured but clamped to
+// the tier's fitted MaxContext so the emitted --ctx-size always fits.
+func RenderConfig(plan *fit.Plan, targetCtx int, w io.Writer) {
+	if plan.Recommended == nil || !plan.Recommended.Fits {
+		fmt.Fprintln(w, "No quant tier fits the given VRAM — nothing to emit. Increase --vram or use a smaller context.")
+		return
+	}
+
+	r := plan.Recommended
+	ctx := r.StandardCtx
+	if targetCtx > 0 {
+		if targetCtx <= r.MaxContext {
+			ctx = targetCtx
+		} else {
+			ctx = r.MaxContext
+			fmt.Fprintf(w, "# --ctx %d exceeds the %d-token fit at %s; clamped to the fitted maximum.\n",
+				targetCtx, r.MaxContext, r.Quant.Name)
+		}
+	}
+
+	fmt.Fprintln(w, "# Suggested llama.cpp launch flags (pwilkin/kimi-k3-text fork).")
+	fmt.Fprintf(w, "# Fit basis: %s · %s context · VRAM budget %.0f GiB · weights ~%.0f GiB on disk.\n",
+		r.Quant.Name, fmtCtx(ctx), plan.VRAMGiB, r.WeightsGiB)
+	if !r.WeightsFitRAM {
+		fmt.Fprintf(w, "# RAM warning: weights ~%.0f GiB exceed the %.0f GiB RAM budget — mmap will page from disk.\n",
+			r.WeightsGiB, plan.RAMGiB)
+	}
+	fmt.Fprintln(w, "# Verify against the fork's current flags; K3Fit never touches a GGUF or a runtime.")
+	fmt.Fprintln(w, "llama-server \\")
+	fmt.Fprintf(w, "  --model kimi-k3-text-%s.gguf \\\n", r.Quant.Name)
+	fmt.Fprintf(w, "  --ctx-size %d \\\n", ctx)
+	fmt.Fprintln(w, "  --n-gpu-layers 999 \\")
+	fmt.Fprintln(w, "  --override-tensor \"exps=CPU\"")
 }
 
 // --- helpers ---
 
 func gIB(b int64) float64 {
 	return float64(b) / float64(model.GiB)
+}
+
+// fmtParamsT formats a parameter count in billions as a terse trillions label
+// without rounding away significance: 2800B → "2.8T" (not "%.0f" → "3T").
+func fmtParamsT(paramsB float64) string {
+	return strconv.FormatFloat(paramsB/1000, 'f', -1, 64) + "T"
 }
 
 func fmtCtx(n int) string {
@@ -239,8 +300,4 @@ func fmtCtx(n int) string {
 		return fmt.Sprintf("%dK", n/1024)
 	}
 	return fmt.Sprintf("%d", n)
-}
-
-func rangeBounds(tps float64) (float64, float64) {
-	return tps * 0.7, tps * 1.3
 }

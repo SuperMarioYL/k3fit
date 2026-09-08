@@ -131,3 +131,42 @@ func TestLargestStandardCtx(t *testing.T) {
 		}
 	}
 }
+
+func TestPlanRAMGate(t *testing.T) {
+	spec := model.DefaultK3Spec()
+	tpsFn := func(q quant.Tier) float64 { return tps.Estimate(spec, q) }
+
+	// Q2_K is ~835.3 GiB on disk: it fits a 900 GiB RAM budget but not 128 GiB.
+	smallRAM := Compute(spec, 32, 128, quant.Table, tpsFn)
+	bigRAM := Compute(spec, 32, 900, quant.Table, tpsFn)
+
+	for _, r := range smallRAM.Results {
+		if r.WeightsFitRAM {
+			t.Errorf("%s: WeightsFitRAM = true with 128 GiB RAM but weights are %.1f GiB",
+				r.Quant.Name, r.WeightsGiB)
+		}
+	}
+
+	byName := make(map[string]FitResult, len(bigRAM.Results))
+	for _, r := range bigRAM.Results {
+		byName[r.Quant.Name] = r
+	}
+	if !byName["Q2_K"].WeightsFitRAM {
+		t.Errorf("Q2_K (%.1f GiB) should fit a 900 GiB RAM budget", byName["Q2_K"].WeightsGiB)
+	}
+	if byName["Q8_0"].WeightsFitRAM {
+		t.Errorf("Q8_0 (%.1f GiB) should not fit a 900 GiB RAM budget", byName["Q8_0"].WeightsGiB)
+	}
+
+	// The RAM budget gates paging risk only — it must not alter the VRAM fit.
+	if len(smallRAM.Results) != len(bigRAM.Results) {
+		t.Fatalf("result count changed with RAM budget: %d vs %d", len(smallRAM.Results), len(bigRAM.Results))
+	}
+	for i := range smallRAM.Results {
+		a, b := smallRAM.Results[i], bigRAM.Results[i]
+		if a.MaxContext != b.MaxContext || a.Fits1M != b.Fits1M || a.TPS != b.TPS {
+			t.Errorf("[%d] %s: RAM budget must not alter VRAM fit (maxCtx %d/%d, fits1M %v/%v, tps %f/%f)",
+				i, a.Quant.Name, a.MaxContext, b.MaxContext, a.Fits1M, b.Fits1M, a.TPS, b.TPS)
+		}
+	}
+}

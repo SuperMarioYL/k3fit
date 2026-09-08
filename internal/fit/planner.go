@@ -27,6 +27,7 @@ type FitResult struct {
 	TPS              float64 // predicted decoding tps at this quant
 	Fits             bool    // MaxContext > 0
 	Fits1M           bool    // does 1M context fit?
+	WeightsFitRAM    bool    // on-disk weights ≤ RAM budget (mmap working set stays RAM-resident)
 }
 
 // Plan is the complete sizing plan for a rig.
@@ -43,6 +44,7 @@ type Plan struct {
 // the given VRAM budget.
 func Compute(spec model.K3Spec, vramGiB, ramGiB float64, quants []quant.Tier, tpsFn func(quant.Tier) float64) *Plan {
 	vramBytes := int64(vramGiB * float64(model.GiB))
+	ramBytes := int64(ramGiB * float64(model.GiB))
 	delta1M := model.ComputeDeltaMemAccount(spec, spec.ContextMax)
 
 	plan := &Plan{
@@ -83,6 +85,11 @@ func Compute(spec model.K3Spec, vramGiB, ramGiB float64, quants []quant.Tier, tp
 		d1M.SetQuant(q.BytesPerParam())
 		fits1M := d1M.VRAMTotalBytes() <= vramBytes
 
+		// RAM gate: the on-disk GGUF is the mmap working set — when it exceeds
+		// the RAM budget the OS pages weights from disk and the RAM-bandwidth
+		// bound behind the tps heuristic no longer holds.
+		weightsFitRAM := d.QuantWeightsBytes <= ramBytes
+
 		stdCtx := largestStandardCtx(maxCtx)
 
 		fr := FitResult{
@@ -96,6 +103,7 @@ func Compute(spec model.K3Spec, vramGiB, ramGiB float64, quants []quant.Tier, tp
 			TPS:            tpsFn(q),
 			Fits:           maxCtx > 0,
 			Fits1M:         fits1M,
+			WeightsFitRAM:  weightsFitRAM,
 		}
 
 		plan.Results = append(plan.Results, fr)

@@ -10,7 +10,7 @@
   },
   "meta": {
     "visual_profile": "neon-particle",
-    "content_version": "0.1.0",
+    "content_version": "0.2.0",
     "demo_source": "docs/demo-results.json"
   },
   "hero": {
@@ -159,12 +159,12 @@
     "details": [
       {
         "title": {
-          "zh": "RAM 不是当前约束",
-          "en": "RAM is not currently enforced"
+          "zh": "RAM 预算参与校验",
+          "en": "RAM budget is checked"
         },
         "body": {
-          "zh": "--ram 会显示在报告里，但 solver 仅按显存计算 context；不能据此证明内存足够。",
-          "en": "--ram is displayed, but the solver computes context from VRAM; the report does not prove sufficient system RAM."
+          "zh": "--ram 以告警门参与求解：某档位磁盘权重超过内存预算时，报告会提示 mmap 将从磁盘换页，吞吐估计的前提不再成立。",
+          "en": "--ram now gates the report as a warning: when a tier's on-disk weights exceed the RAM budget, the report flags that mmap will page from disk and the tps estimate's precondition no longer holds."
         }
       }
     ]
@@ -190,7 +190,7 @@
           "en": "Calculate per-tier results under a 32 GiB VRAM budget."
         },
         "command": "go run ./cmd/k3fit --vram 32 --ram 128",
-        "output": "\nK3Fit — Kimi K3 Delta-Attention Fit Planner\n══════════════════════════════════════════════════════════\nRig:  32 GiB VRAM | 128 GiB RAM\nModel: Kimi K3 — 3T params, MoE 896×16, 93 layers (69 Delta-Attention + 24 KV)\n\nDelta-Attention memory at 1M context\n+--------------------------------------------------+-------+------------------------------------------+\n|                    COMPONENT                     |  GIB  |                  NOTES                   |\n+--------------------------------------------------+-------+------------------------------------------+\n| DA matrix (69 layers × 2 heads × 128×128 × fp16) |  0.00 | 128×128 matrix/head, context-independent |\n| KV cache (24 layers × 1M tokens)                 | 22.89 | standard per-token KV cache              |\n| Total (Delta-Attention)                          | 22.89 | at 1M ctx                                |\n| (Standard KV — all 93 layers)                    | 88.69 | what generic profilers compute           |\n+--------------------------------------------------+-------+------------------------------------------+\nDelta-Attention saves 3.9× vs standard KV-cache at 1M context.\n\nQuant fit analysis (VRAM = 32 GiB)\n+--------+-------+-------------+---------+---------+-------+\n| QUANT  |  BPW  | WEIGHTS GIB | MAX CTX | STD CTX | FITS? |\n+--------+-------+-------------+---------+---------+-------+\n| Q2_K   |  2.56 |       835.3 |  589837 |    512K |  yes  |\n| Q3_K_S |  2.75 |       896.4 |  530709 |    512K |  yes  |\n| Q3_K_M |  3.27 |      1065.9 |  366728 |    256K |  yes  |\n| Q4_K_S |  3.50 |      1140.9 |  294198 |    256K |  yes  |\n| Q4_K_M |  4.25 |      1385.3 |   57687 |     32K |  yes  |\n| Q5_K_S |  5.00 |      1629.8 |       — |       — |  no   |\n| Q5_K_M |  5.25 |      1711.3 |       — |       — |  no   |\n| Q6_K   |  6.10 |      1988.4 |       — |       — |  no   |\n| Q8_0   |  8.00 |      2607.7 |       — |       — |  no   |\n| F16    | 16.00 |      5215.4 |       — |       — |  no   |\n+--------+-------+-------------+---------+---------+-------+\nWeights GiB = total model on disk (mmap). Max Ctx = VRAM-resident ceiling.\n\n──────────────────────────────────────────────────────────\nRecommendation: Q2_K at 512K context\nExpert routing:  16 of 896 experts active per token (1.8% activation)\nPredicted decoding tps ≈ 12 (heuristic, ±30% → 8–16)\nDisk required:  ~835 GiB (Q2_K GGUF)\nVRAM at 512K:      30.5 GiB (weights 18.5 + ctx 12.0) / 32 GiB budget\n1M context:      does NOT fit at any quant — max is 589837 tokens (576K) at Q2_K\n\n",
+        "output": "\nK3Fit — Kimi K3 Delta-Attention Fit Planner\n══════════════════════════════════════════════════════════\nRig:  32 GiB VRAM | 128 GiB RAM\nModel: Kimi K3 — 2.8T params, MoE 896×16, 93 layers (69 Delta-Attention + 24 KV)\n\nDelta-Attention memory at 1M context\n+--------------------------------------------------+-------+------------------------------------------+\n|                    COMPONENT                     |  GIB  |                  NOTES                   |\n+--------------------------------------------------+-------+------------------------------------------+\n| DA matrix (69 layers × 2 heads × 128×128 × fp16) |  0.00 | 128×128 matrix/head, context-independent |\n| KV cache (24 layers × 1M tokens)                 | 22.89 | standard per-token KV cache              |\n| Total (Delta-Attention)                          | 22.89 | at 1M ctx                                |\n| (Standard KV — all 93 layers)                    | 88.69 | what generic profilers compute           |\n+--------------------------------------------------+-------+------------------------------------------+\nDelta-Attention saves 3.9× vs standard KV-cache at 1M context.\n\nQuant fit analysis (VRAM = 32 GiB)\n+--------+-------+-------------+---------+---------+-------+\n| QUANT  |  BPW  | WEIGHTS GIB | MAX CTX | STD CTX | FITS? |\n+--------+-------+-------------+---------+---------+-------+\n| Q2_K   |  2.56 |       835.3 |  589837 |    512K |  yes  |\n| Q3_K_S |  2.75 |       896.4 |  530709 |    512K |  yes  |\n| Q3_K_M |  3.27 |      1065.9 |  366728 |    256K |  yes  |\n| Q4_K_S |  3.50 |      1140.9 |  294198 |    256K |  yes  |\n| Q4_K_M |  4.25 |      1385.3 |   57687 |     32K |  yes  |\n| Q5_K_S |  5.00 |      1629.8 |       — |       — |  no   |\n| Q5_K_M |  5.25 |      1711.3 |       — |       — |  no   |\n| Q6_K   |  6.10 |      1988.4 |       — |       — |  no   |\n| Q8_0   |  8.00 |      2607.7 |       — |       — |  no   |\n| F16    | 16.00 |      5215.4 |       — |       — |  no   |\n+--------+-------+-------------+---------+---------+-------+\nWeights GiB = total model on disk (mmap). Max Ctx = VRAM-resident ceiling.\n\n──────────────────────────────────────────────────────────\nRecommendation: Q2_K at 512K context\nExpert routing:  16 of 896 experts active per token (1.8% activation)\nPredicted decoding tps ≈ 12 (heuristic, ±30% → 8–16)\nDisk required:  ~835 GiB (Q2_K GGUF)\nVRAM at 512K:      30.5 GiB (weights 18.5 + ctx 12.0) / 32 GiB budget\nRAM warning:     weights 835 GiB exceed the 128 GiB RAM budget — mmap will page from disk; the tps estimate assumes RAM-resident weights\n1M context:      does NOT fit at any quant — max is 589837 tokens (576K) at Q2_K\n\n",
         "image": "/assets/presentation/demo-0-light.svg",
         "imageDark": "/assets/presentation/demo-0-dark.svg"
       },
@@ -204,7 +204,7 @@
           "en": "Recalculate for 96 GiB VRAM and Q3_K_M."
         },
         "command": "go run ./cmd/k3fit --vram 96 --ram 256 --quant Q3_K_M",
-        "output": "\nK3Fit — Kimi K3 Delta-Attention Fit Planner\n══════════════════════════════════════════════════════════\nRig:  96 GiB VRAM | 256 GiB RAM\nModel: Kimi K3 — 3T params, MoE 896×16, 93 layers (69 Delta-Attention + 24 KV)\n\nDelta-Attention memory at 1M context\n+--------------------------------------------------+-------+------------------------------------------+\n|                    COMPONENT                     |  GIB  |                  NOTES                   |\n+--------------------------------------------------+-------+------------------------------------------+\n| DA matrix (69 layers × 2 heads × 128×128 × fp16) |  0.00 | 128×128 matrix/head, context-independent |\n| KV cache (24 layers × 1M tokens)                 | 22.89 | standard per-token KV cache              |\n| Total (Delta-Attention)                          | 22.89 | at 1M ctx                                |\n| (Standard KV — all 93 layers)                    | 88.69 | what generic profilers compute           |\n+--------------------------------------------------+-------+------------------------------------------+\nDelta-Attention saves 3.9× vs standard KV-cache at 1M context.\n\nQuant fit analysis (VRAM = 96 GiB)\n+--------+------+-------------+---------+---------+-------+\n| QUANT  | BPW  | WEIGHTS GIB | MAX CTX | STD CTX | FITS? |\n+--------+------+-------------+---------+---------+-------+\n| Q3_K_M | 3.27 |      1065.9 | 1000000 |      1M |  yes  |\n+--------+------+-------------+---------+---------+-------+\nWeights GiB = total model on disk (mmap). Max Ctx = VRAM-resident ceiling.\n\n──────────────────────────────────────────────────────────\nRecommendation: Q3_K_M at 1M context\nExpert routing:  16 of 896 experts active per token (1.8% activation)\nPredicted decoding tps ≈ 9 (heuristic, ±30% → 7–12)\nDisk required:  ~1066 GiB (Q3_K_M GGUF)\nVRAM at 1M:      46.5 GiB (weights 23.6 + ctx 22.9) / 96 GiB budget\n1M context:      fits at Q3_K_M\n\n",
+        "output": "\nK3Fit — Kimi K3 Delta-Attention Fit Planner\n══════════════════════════════════════════════════════════\nRig:  96 GiB VRAM | 256 GiB RAM\nModel: Kimi K3 — 2.8T params, MoE 896×16, 93 layers (69 Delta-Attention + 24 KV)\n\nDelta-Attention memory at 1M context\n+--------------------------------------------------+-------+------------------------------------------+\n|                    COMPONENT                     |  GIB  |                  NOTES                   |\n+--------------------------------------------------+-------+------------------------------------------+\n| DA matrix (69 layers × 2 heads × 128×128 × fp16) |  0.00 | 128×128 matrix/head, context-independent |\n| KV cache (24 layers × 1M tokens)                 | 22.89 | standard per-token KV cache              |\n| Total (Delta-Attention)                          | 22.89 | at 1M ctx                                |\n| (Standard KV — all 93 layers)                    | 88.69 | what generic profilers compute           |\n+--------------------------------------------------+-------+------------------------------------------+\nDelta-Attention saves 3.9× vs standard KV-cache at 1M context.\n\nQuant fit analysis (VRAM = 96 GiB)\n+--------+------+-------------+---------+---------+-------+\n| QUANT  | BPW  | WEIGHTS GIB | MAX CTX | STD CTX | FITS? |\n+--------+------+-------------+---------+---------+-------+\n| Q3_K_M | 3.27 |      1065.9 | 1000000 |      1M |  yes  |\n+--------+------+-------------+---------+---------+-------+\nWeights GiB = total model on disk (mmap). Max Ctx = VRAM-resident ceiling.\n\n──────────────────────────────────────────────────────────\nRecommendation: Q3_K_M at 1M context\nExpert routing:  16 of 896 experts active per token (1.8% activation)\nPredicted decoding tps ≈ 9 (heuristic, ±30% → 7–12)\nDisk required:  ~1066 GiB (Q3_K_M GGUF)\nVRAM at 1M:      46.5 GiB (weights 23.6 + ctx 22.9) / 96 GiB budget\nRAM warning:     weights 1066 GiB exceed the 256 GiB RAM budget — mmap will page from disk; the tps estimate assumes RAM-resident weights\n1M context:      fits at Q3_K_M\n\n",
         "image": "/assets/presentation/demo-1-light.svg",
         "imageDark": "/assets/presentation/demo-1-dark.svg"
       }
@@ -242,8 +242,8 @@
       "en": "Embedded model constants are explicitly schema-unverified, not confirmed official specifications."
     },
     {
-      "zh": "RAM 未进入 fit 约束，吞吐估计也未读取硬件带宽。",
-      "en": "RAM is not enforced by the fit constraint, and throughput does not use measured device bandwidth."
+      "zh": "RAM 以告警门参与 fit（磁盘权重对比预算）；吞吐估计仍未读取硬件带宽。",
+      "en": "RAM is enforced as a warning gate (on-disk weights vs budget); throughput still does not use measured device bandwidth."
     },
     {
       "zh": "这些输出不构成实测性能或部署成功保证。",
@@ -251,6 +251,6 @@
     }
   ],
   "footer": {
-    "tag": "0.1.0 · Go 1.24+ · MIT"
+    "tag": "0.2.0 · Go 1.24+ · MIT"
   }
 }

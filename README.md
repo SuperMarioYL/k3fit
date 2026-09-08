@@ -9,7 +9,7 @@
 
 **Compare quant tiers, context memory and VRAM budgets under an embedded K3 model profile.**
 
-`v0.1.0` · `Go 1.24+` · [MIT](LICENSE)
+`v0.2.0` · `Go 1.24+` · [MIT](LICENSE)
 
 [Website](https://k3fit.lei6393.com) · [Demo record](docs/demo-results.json)
 
@@ -28,7 +28,7 @@ Before downloading and deploying large weights, explicit model assumptions can s
 
 model computes fixed-state and KV memory; quant supplies bits-per-weight values. fit subtracts active weights and fixed state from VRAM to derive a maximum context. tps divides a fixed 240 GB/s constant by active weights. Reports retain per-tier estimates without running inference.
 
-Assumptions are in [spec.go](internal/model/spec.go), with formulas in [delta_attention.go](internal/model/delta_attention.go) and [planner.go](internal/fit/planner.go). --ram is currently retained for reporting and is not enforced by the fit solver.
+Assumptions are in [spec.go](internal/model/spec.go), with formulas in [delta_attention.go](internal/model/delta_attention.go) and [planner.go](internal/fit/planner.go). --ram is enforced as a warning gate: a tier whose on-disk weights exceed the RAM budget is flagged in the report, because mmap pages from disk and the RAM-bandwidth-bound tps estimate no longer holds.
 
 ## Install
 
@@ -53,7 +53,7 @@ All inputs are command-line budgets, retained in [examples/presentation_demo.sh]
 
 ## Usage
 
---vram and --ram are required GiB values. --quant restricts a tier and --ctx selects a context to inspect in the report. By default, all quant tiers are considered and recommendation prioritizes maximum context, not model quality.
+--vram and --ram are required GiB values. --quant restricts a tier and --ctx selects a context to inspect in the report. --emit-config prints suggested llama.cpp launch flags for the recommended fit. By default, all quant tiers are considered and recommendation prioritizes maximum context, not model quality.
 
 ## Recorded demo
 
@@ -74,7 +74,7 @@ $ go run ./cmd/k3fit --vram 32 --ram 128
 K3Fit — Kimi K3 Delta-Attention Fit Planner
 ══════════════════════════════════════════════════════════
 Rig:  32 GiB VRAM | 128 GiB RAM
-Model: Kimi K3 — 3T params, MoE 896×16, 93 layers (69 Delta-Attention + 24 KV)
+Model: Kimi K3 — 2.8T params, MoE 896×16, 93 layers (69 Delta-Attention + 24 KV)
 
 Delta-Attention memory at 1M context
 +--------------------------------------------------+-------+------------------------------------------+
@@ -110,6 +110,7 @@ Expert routing:  16 of 896 experts active per token (1.8% activation)
 Predicted decoding tps ≈ 12 (heuristic, ±30% → 8–16)
 Disk required:  ~835 GiB (Q2_K GGUF)
 VRAM at 512K:      30.5 GiB (weights 18.5 + ctx 12.0) / 32 GiB budget
+RAM warning:     weights 835 GiB exceed the 128 GiB RAM budget — mmap will page from disk; the tps estimate assumes RAM-resident weights
 1M context:      does NOT fit at any quant — max is 589837 tokens (576K) at Q2_K
 ```
 
@@ -123,7 +124,7 @@ $ go run ./cmd/k3fit --vram 96 --ram 256 --quant Q3_K_M
 K3Fit — Kimi K3 Delta-Attention Fit Planner
 ══════════════════════════════════════════════════════════
 Rig:  96 GiB VRAM | 256 GiB RAM
-Model: Kimi K3 — 3T params, MoE 896×16, 93 layers (69 Delta-Attention + 24 KV)
+Model: Kimi K3 — 2.8T params, MoE 896×16, 93 layers (69 Delta-Attention + 24 KV)
 
 Delta-Attention memory at 1M context
 +--------------------------------------------------+-------+------------------------------------------+
@@ -150,6 +151,7 @@ Expert routing:  16 of 896 experts active per token (1.8% activation)
 Predicted decoding tps ≈ 9 (heuristic, ±30% → 7–12)
 Disk required:  ~1066 GiB (Q3_K_M GGUF)
 VRAM at 1M:      46.5 GiB (weights 23.6 + ctx 22.9) / 96 GiB budget
+RAM warning:     weights 1066 GiB exceed the 256 GiB RAM budget — mmap will page from disk; the tps estimate assumes RAM-resident weights
 1M context:      fits at Q3_K_M
 ```
 
@@ -168,14 +170,14 @@ K3Fit is an inspectable calculator. It does not read GGUF metadata, probe actual
 
 ## Configuration
 
-Quant coefficients are in internal/quant/table.go, model constants in internal/model/spec.go and bandwidth in internal/tps/estimate.go. The displayed ±30% range is a fixed proportional band, not an empirical confidence interval. There is no implemented --emit-config or topology option.
+Quant coefficients are in internal/quant/table.go, model constants in internal/model/spec.go and bandwidth in internal/tps/estimate.go. The displayed ±30% range is a fixed proportional band, not an empirical confidence interval. Run with --emit-config for suggested llama.cpp launch flags (model file, clamped --ctx-size, expert tensors pinned to CPU); verify them against the pwilkin/kimi-k3-text fork's current flag surface. No topology option yet.
 
 ## Roadmap and scope
 
-Arithmetic memory accounting, quant enumeration, context checks and heuristic throughput estimates are implemented. Device calibration, launch-config export, multi-GPU topology and other model profiles remain future work.
+Arithmetic memory accounting, quant enumeration, context checks, heuristic throughput estimates and launch-config export are implemented. Device calibration, multi-GPU topology and other model profiles remain future work.
 
 - Embedded model constants are explicitly schema-unverified, not confirmed official specifications.
-- RAM is not enforced by the fit constraint, and throughput does not use measured device bandwidth.
+- RAM is enforced as a warning gate (on-disk weights vs --ram); throughput does not use measured device bandwidth.
 - These outputs are not measured performance or a guarantee of successful deployment.
 
 [Terminal recording](assets/demo.gif) · [Recording script](docs/demo.tape)
