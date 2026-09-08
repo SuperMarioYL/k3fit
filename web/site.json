@@ -104,6 +104,10 @@
           "alt": {
             "zh": "两个明确预算场景运行真实 CLI，结果仅验证内置公式的执行。没有核对官方 K3 规格、运行模型或测量吞吐；报告中的倍数与百分比都是给定假设下的计算值。",
             "en": "Two explicit budget scenarios run the real CLI and exercise its formulas. They do not verify official K3 specifications, run a model or measure throughput; ratios and ranges are calculations under the embedded assumptions."
+          },
+          "mobile": {
+            "light": "/assets/presentation/process-mobile-light.svg",
+            "dark": "/assets/presentation/process-mobile-dark.svg"
           }
         }
       },
@@ -122,6 +126,10 @@
           "alt": {
             "zh": "model 计算固定状态与 KV 内存；quant 提供 bits-per-weight 表；fit 用显存减去活动权重与固定状态，求最大 context；tps 用固定 240 GB/s 常量除以活动权重。报告保留每档结果，未运行推理。",
             "en": "model computes fixed-state and KV memory; quant supplies bits-per-weight values. fit subtracts active weights and fixed state from VRAM to derive a maximum context. tps divides a fixed 240 GB/s constant by active weights. Reports retain per-tier estimates without running inference."
+          },
+          "mobile": {
+            "light": "/assets/presentation/architecture-mobile-light.svg",
+            "dark": "/assets/presentation/architecture-mobile-dark.svg"
           }
         }
       },
@@ -140,6 +148,10 @@
           "alt": {
             "zh": "K3Fit 是一个假设可检查的计算器，不读取 GGUF 元数据或实际硬件，也不执行推理。下载与硬件选型前仍需验证模型规格、完整权重驻留需求和运行时开销。",
             "en": "K3Fit is an inspectable calculator. It does not read GGUF metadata, probe actual hardware or execute inference. Check model specifications, full residency needs and runtime overhead before relying on a deployment decision."
+          },
+          "mobile": {
+            "light": "/assets/presentation/integrations-mobile-light.svg",
+            "dark": "/assets/presentation/integrations-mobile-dark.svg"
           }
         }
       }
