@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "scope": "Pure arithmetic over an embedded schema-unverified model profile and two supplied budget scenarios. No inference or measured throughput; RAM is enforced as a warning gate (on-disk weights vs budget, mmap paging flagged in the report).",
   "inputs": [
     {

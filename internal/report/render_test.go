@@ -93,3 +93,58 @@ func TestRenderConfig(t *testing.T) {
 		t.Errorf("expected the no-fit message:\n%s", buf.String())
 	}
 }
+
+func TestSub4KFitUsesExactMaxContext(t *testing.T) {
+	// --vram 18.5 leaves Q2_K's 18.49 GiB VRAM-resident weights only ~13 tokens
+	// of KV headroom: a genuine fit below the smallest standard context (4K).
+	// v0.2.0 rendered this as "Recommendation: Q2_K at 0 context" and
+	// --emit-config emitted the unusable "--ctx-size 0".
+	var buf bytes.Buffer
+	RenderPlan(planFor(t, 18.5, 32), &buf)
+	out := buf.String()
+
+	if strings.Contains(out, "at 0 context") || strings.Contains(out, "VRAM at 0:") {
+		t.Errorf("sub-4K fit must render the exact max context, not 0:\n%s", out)
+	}
+	if !strings.Contains(out, "Recommendation: Q2_K at 13 context") {
+		t.Errorf("expected the exact 13-token fit in the recommendation:\n%s", out)
+	}
+
+	buf.Reset()
+	RenderConfig(planFor(t, 18.5, 32), 0, &buf)
+	out = buf.String()
+	if strings.Contains(out, "--ctx-size 0") {
+		t.Errorf("RenderConfig must never emit --ctx-size 0:\n%s", out)
+	}
+	if !strings.Contains(out, "--ctx-size 13") {
+		t.Errorf("expected --ctx-size 13 (the exact fitted maximum):\n%s", out)
+	}
+}
+
+func TestBudgetsPrintAsGiven(t *testing.T) {
+	// v0.2.0 printed "Rig:  18 GiB VRAM" for --vram 18.5: %.0f rounded away the
+	// budget the solver actually used. Budgets must print as given (%g); all
+	// recorded integer scenarios render byte-identically (see the root
+	// demo-contract guard).
+	var buf bytes.Buffer
+	RenderPlan(planFor(t, 18.5, 32), &buf)
+	out := buf.String()
+	if !strings.Contains(out, "Rig:  18.5 GiB VRAM | 32 GiB RAM") {
+		t.Errorf("RenderPlan should print budgets as given (18.5), not rounded:\n%s", out)
+	}
+	if !strings.Contains(out, "Quant fit analysis (VRAM = 18.5 GiB)") {
+		t.Errorf("quant-table header should print the budget as given:\n%s", out)
+	}
+
+	buf.Reset()
+	RenderConstrained(planFor(t, 18.5, 32), 100, &buf)
+	if !strings.Contains(buf.String(), "VRAM = 18.5 GiB") {
+		t.Errorf("RenderConstrained header should print the budget as given:\n%s", buf.String())
+	}
+
+	buf.Reset()
+	RenderConfig(planFor(t, 18.5, 32), 0, &buf)
+	if !strings.Contains(buf.String(), "VRAM budget 18.5 GiB") {
+		t.Errorf("RenderConfig fit basis should print the budget as given:\n%s", buf.String())
+	}
+}

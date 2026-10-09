@@ -22,7 +22,7 @@ func RenderPlan(plan *fit.Plan, w io.Writer) {
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "K3Fit — Kimi K3 Delta-Attention Fit Planner\n")
 	fmt.Fprintln(w, strings.Repeat("═", 58))
-	fmt.Fprintf(w, "Rig:  %.0f GiB VRAM | %.0f GiB RAM\n", plan.VRAMGiB, plan.RAMGiB)
+	fmt.Fprintf(w, "Rig:  %g GiB VRAM | %g GiB RAM\n", plan.VRAMGiB, plan.RAMGiB)
 	fmt.Fprintf(w, "Model: Kimi K3 — %s params, MoE %d×%d, %d layers (%d Delta-Attention + %d KV)\n",
 		fmtParamsT(spec.TotalParamsB), spec.ExpertsTotal, spec.ExpertsActive,
 		spec.TotalLayers, spec.DALayers, spec.KVLayers)
@@ -77,7 +77,7 @@ func renderMemoryBreakdown(plan *fit.Plan, w io.Writer) {
 }
 
 func renderQuantTable(plan *fit.Plan, w io.Writer) {
-	fmt.Fprintf(w, "Quant fit analysis (VRAM = %.0f GiB)\n", plan.VRAMGiB)
+	fmt.Fprintf(w, "Quant fit analysis (VRAM = %g GiB)\n", plan.VRAMGiB)
 	tw := tablewriter.NewWriter(w)
 	tw.SetHeader([]string{"Quant", "bpw", "Weights GiB", "Max Ctx", "Std Ctx", "Fits?"})
 	tw.SetAutoWrapText(false)
@@ -124,22 +124,23 @@ func renderRecommendation(plan *fit.Plan, w io.Writer) {
 	r := plan.Recommended
 	low, high := tps.Range(r.TPS)
 
-	// Recompute context memory at the recommended standard context (not maxCtx)
-	// so the VRAM line reflects what the user will actually run.
-	stdD := model.ComputeDeltaMemAccount(spec, r.StandardCtx)
+	// Recompute context memory at the recommended context (not maxCtx) so the
+	// VRAM line reflects what the user will actually run.
+	recCtx := displayCtx(r)
+	stdD := model.ComputeDeltaMemAccount(spec, recCtx)
 	stdD.SetQuant(r.Quant.BytesPerParam())
 	stdCtxMem := gIB(stdD.ContextMemBytes)
 	stdVRAMTotal := gIB(stdD.VRAMTotalBytes())
 
 	fmt.Fprintln(w, strings.Repeat("─", 58))
-	fmt.Fprintf(w, "Recommendation: %s at %s context\n", r.Quant.Name, fmtCtx(r.StandardCtx))
+	fmt.Fprintf(w, "Recommendation: %s at %s context\n", r.Quant.Name, fmtCtx(recCtx))
 	fmt.Fprintf(w, "Expert routing:  %d of %d experts active per token (%.1f%% activation)\n",
 		spec.ExpertsActive, spec.ExpertsTotal, spec.ExpertActivationRatio()*100)
 	fmt.Fprintf(w, "Predicted decoding tps ≈ %.0f (heuristic, ±30%% → %.0f–%.0f)\n",
 		r.TPS, low, high)
 	fmt.Fprintf(w, "Disk required:  ~%.0f GiB (%s GGUF)\n", r.WeightsGiB, r.Quant.Name)
-	fmt.Fprintf(w, "VRAM at %s:      %.1f GiB (weights %.1f + ctx %.1f) / %.0f GiB budget\n",
-		fmtCtx(r.StandardCtx), stdVRAMTotal, r.VRAMWeightsGiB, stdCtxMem, plan.VRAMGiB)
+	fmt.Fprintf(w, "VRAM at %s:      %.1f GiB (weights %.1f + ctx %.1f) / %g GiB budget\n",
+		fmtCtx(recCtx), stdVRAMTotal, r.VRAMWeightsGiB, stdCtxMem, plan.VRAMGiB)
 	renderRAMWarning(r, plan.RAMGiB, w)
 
 	if r.Fits1M {
@@ -159,7 +160,7 @@ func renderRAMWarning(r *fit.FitResult, ramGiB float64, w io.Writer) {
 	if r.WeightsFitRAM {
 		return
 	}
-	fmt.Fprintf(w, "RAM warning:     weights %.0f GiB exceed the %.0f GiB RAM budget — mmap will page from disk; the tps estimate assumes RAM-resident weights\n",
+	fmt.Fprintf(w, "RAM warning:     weights %.0f GiB exceed the %g GiB RAM budget — mmap will page from disk; the tps estimate assumes RAM-resident weights\n",
 		r.WeightsGiB, ramGiB)
 }
 
@@ -173,7 +174,7 @@ func RenderConstrained(plan *fit.Plan, targetCtx int, w io.Writer) {
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "K3Fit — Kimi K3 Delta-Attention Fit Planner\n")
 	fmt.Fprintln(w, strings.Repeat("═", 58))
-	fmt.Fprintf(w, "Rig:  %.0f GiB VRAM | %.0f GiB RAM\n", plan.VRAMGiB, plan.RAMGiB)
+	fmt.Fprintf(w, "Rig:  %g GiB VRAM | %g GiB RAM\n", plan.VRAMGiB, plan.RAMGiB)
 	fmt.Fprintf(w, "Target: %s context\n", fmtCtx(targetCtx))
 	fmt.Fprintf(w, "Model: Kimi K3 — %s params, MoE %d×%d, %d layers (%d Delta-Attention + %d KV)\n",
 		fmtParamsT(spec.TotalParamsB), spec.ExpertsTotal, spec.ExpertsActive,
@@ -181,7 +182,7 @@ func RenderConstrained(plan *fit.Plan, targetCtx int, w io.Writer) {
 	fmt.Fprintln(w)
 
 	// Per-quant table
-	fmt.Fprintf(w, "Quant fit for %s context (VRAM = %.0f GiB)\n", fmtCtx(targetCtx), plan.VRAMGiB)
+	fmt.Fprintf(w, "Quant fit for %s context (VRAM = %g GiB)\n", fmtCtx(targetCtx), plan.VRAMGiB)
 	tw := tablewriter.NewWriter(w)
 	tw.SetHeader([]string{"Quant", "bpw", "Weights GiB", "Max Ctx", fmt.Sprintf("Fits %s?", fmtCtx(targetCtx)), "tps"})
 	tw.SetAutoWrapText(false)
@@ -225,7 +226,7 @@ func RenderConstrained(plan *fit.Plan, targetCtx int, w io.Writer) {
 
 	// Recommendation
 	if bestFit == nil {
-		fmt.Fprintf(w, "No quant tier fits %s context in %.0f GiB VRAM. Reduce --ctx or increase --vram.\n\n",
+		fmt.Fprintf(w, "No quant tier fits %s context in %g GiB VRAM. Reduce --ctx or increase --vram.\n\n",
 			fmtCtx(targetCtx), plan.VRAMGiB)
 		return
 	}
@@ -254,7 +255,7 @@ func RenderConfig(plan *fit.Plan, targetCtx int, w io.Writer) {
 	}
 
 	r := plan.Recommended
-	ctx := r.StandardCtx
+	ctx := displayCtx(r)
 	if targetCtx > 0 {
 		if targetCtx <= r.MaxContext {
 			ctx = targetCtx
@@ -266,10 +267,10 @@ func RenderConfig(plan *fit.Plan, targetCtx int, w io.Writer) {
 	}
 
 	fmt.Fprintln(w, "# Suggested llama.cpp launch flags (pwilkin/kimi-k3-text fork).")
-	fmt.Fprintf(w, "# Fit basis: %s · %s context · VRAM budget %.0f GiB · weights ~%.0f GiB on disk.\n",
+	fmt.Fprintf(w, "# Fit basis: %s · %s context · VRAM budget %g GiB · weights ~%.0f GiB on disk.\n",
 		r.Quant.Name, fmtCtx(ctx), plan.VRAMGiB, r.WeightsGiB)
 	if !r.WeightsFitRAM {
-		fmt.Fprintf(w, "# RAM warning: weights ~%.0f GiB exceed the %.0f GiB RAM budget — mmap will page from disk.\n",
+		fmt.Fprintf(w, "# RAM warning: weights ~%.0f GiB exceed the %g GiB RAM budget — mmap will page from disk.\n",
 			r.WeightsGiB, plan.RAMGiB)
 	}
 	fmt.Fprintln(w, "# Verify against the fork's current flags; K3Fit never touches a GGUF or a runtime.")
@@ -290,6 +291,18 @@ func gIB(b int64) float64 {
 // without rounding away significance: 2800B → "2.8T" (not "%.0f" → "3T").
 func fmtParamsT(paramsB float64) string {
 	return strconv.FormatFloat(paramsB/1000, 'f', -1, 64) + "T"
+}
+
+// displayCtx returns the context to display and configure for a fitted tier:
+// the largest standard context, falling back to the exact fitted maximum when
+// the fit is below the smallest standard context (StandardCtx == 0). Without
+// the fallback a genuine sub-4K fit renders as "0 context" and --emit-config
+// emits an unusable "--ctx-size 0".
+func displayCtx(r *fit.FitResult) int {
+	if r.StandardCtx > 0 {
+		return r.StandardCtx
+	}
+	return r.MaxContext
 }
 
 func fmtCtx(n int) string {

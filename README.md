@@ -9,7 +9,7 @@
 
 **Compare quant tiers, context memory and VRAM budgets under an embedded K3 model profile.**
 
-`v0.2.0` · `Go 1.24+` · [MIT](LICENSE)
+`v0.3.0` · `Go 1.24+` · [MIT](LICENSE)
 
 [Website](https://k3fit.lei6393.com) · [Demo record](docs/demo-results.json)
 

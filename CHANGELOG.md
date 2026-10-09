@@ -4,6 +4,25 @@ All notable changes to K3Fit are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions match the
 VERSION file and the GitHub release tags.
 
+## [v0.3.0] - 2026-10-09
+
+### Fixed
+
+- Sub-4K fits now render the exact max context instead of "at 0 context", and
+  `--emit-config` emits the real fitted `--ctx-size` instead of the unusable
+  `--ctx-size 0` (e.g. `--vram 18.5 --ram 32` fits 13 tokens at Q2_K and now
+  says so) (`internal/report/render.go`).
+- VRAM/RAM budgets print as given (`18.5` stays `18.5`) in every report line —
+  the report no longer rounds away the budget the solver actually used
+  (`internal/report/render.go`).
+
+### Added
+
+- A demo-contract drift guard pins the recorded CLI output byte-for-byte across
+  `docs/demo-results.json`, `web/site.json` and both README sample blocks, so a
+  future report change that forgets one surface fails CI instead of shipping a
+  contradiction (`demo_contract_test.go`).
+
 ## [v0.2.0] - 2026-09-09
 
 ### Fixed

@@ -9,7 +9,7 @@
 
 **在内置 K3 模型假设下，比较量化层级、context 内存与显存预算。**
 
-`v0.2.0` · `Go 1.24+` · [MIT](LICENSE)
+`v0.3.0` · `Go 1.24+` · [MIT](LICENSE)
 
 [Website](https://k3fit.lei6393.com) · [Demo record](docs/demo-results.json)
 
