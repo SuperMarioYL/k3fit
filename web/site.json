@@ -166,6 +166,16 @@
           "zh": "--ram 以告警门参与求解：某档位磁盘权重超过内存预算时，报告会提示 mmap 将从磁盘换页，吞吐估计的前提不再成立。",
           "en": "--ram now gates the report as a warning: when a tier's on-disk weights exceed the RAM budget, the report flags that mmap will page from disk and the tps estimate's precondition no longer holds."
         }
+      },
+      {
+        "title": {
+          "zh": "边界输出精确到 token",
+          "en": "Edge-case output is exact"
+        },
+        "body": {
+          "zh": "低于最小标准 context（4K）的拟合现在显示精确 token 数，--emit-config 输出真实 --ctx-size 而不是 0；显存与内存预算按输入原样显示，不再四舍五入。",
+          "en": "Fits below the smallest standard context (4K) now render the exact token count, --emit-config emits a real --ctx-size instead of 0, and VRAM/RAM budgets print as given instead of rounded."
+        }
       }
     ]
   },
